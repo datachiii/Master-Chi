@@ -142,8 +142,6 @@ module DT(
 			endcase
 		end
 
-		else if (cs == forward_finish) res_addr <= 0;
-
 		else if (ns == backward || cs == backward) begin
 			case(cnt)
 			4'd0: res_addr <= res_addr + 129; // SE
