@@ -23,7 +23,6 @@ reg [3:0] i;
 reg [5:0] cnt_corner; // counter for the corner of box
 reg [1:0] th0,th1,th2,th3,th5,th6,th7,th8; // threshold
 
-
 always @(posedge clk , posedge reset) begin  // current state
     if(reset) cs <= idle;
     else cs <= ns ;
@@ -65,6 +64,7 @@ always @(*) begin // output state
 
         read: begin
             gray_req = 1;
+            lbp_write = 0;
             box[i] = gray_data;
         end
 
@@ -87,7 +87,10 @@ always @(*) begin // output state
 
         done: finish = 1;
 
-        default: ;
+        default: begin
+            gray_req = 1'b0;
+            lbp_write = 1'b0;  
+        end
   
         
     endcase
@@ -102,13 +105,13 @@ end
 
 always @(posedge clk , posedge reset ) begin 
     if(reset) cnt_box <= 0;
-    else if (cs == read && cnt_box < 2) cnt_box <= cnt_box +1; // counting for a row in the box
+    else if (cs == read && cnt_box < 2) cnt_box <= cnt_box +1; // counting for a index of rows in the box
     else cnt_box <= 0;
 end
 
 always @(posedge clk , posedge reset) begin
     if(reset) cnt_corner <= 0;
-    else if (cs == compute)begin // counting for a index of the corner of the box;
+    else if (cs == compute)begin // counting for a index of the upper left corner of the box;
         if(cnt_mem < 5) cnt_corner <= cnt_corner + 1;
         else cnt_corner <= cnt_corner + 3;
     end
@@ -121,13 +124,13 @@ always @(posedge clk , posedge reset) begin
         if(cnt_box == 2) gray_addr <= gray_addr + 6; // go to next row in the box
         else gray_addr <= gray_addr + 1; 
     end
-    else gray_addr <= cnt_corner;
+    else gray_addr <= cnt_corner; // next start point
 end
 
 always @(posedge clk , posedge reset) begin
     if(reset) cnt_mem <= 0;
-    else if (cs == compute) cnt_mem <= cnt_mem + 1; // counting for a row in the memory
-    else if (cnt_mem == 6) cnt_mem <= 0;
+    else if (cs == compute) cnt_mem <= cnt_mem + 1; // counting for a index of rows in the memory
+    else if (cnt_mem == 6) cnt_mem <= 0; // ignoring the outermost ring
     else ;
 end
 
