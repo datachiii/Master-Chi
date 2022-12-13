@@ -3,10 +3,10 @@ input    clk;
 input    reset;
 output reg  [5:0]  gray_addr;
 output reg          gray_req;
-input   [7:0]  gray_data;
+input   [13:0]  gray_data;
 output reg  [5:0]  lbp_addr;
 output reg  lbp_write;
-output reg [7:0]  lbp_data;
+output reg [13:0]  lbp_data;
 output reg  finish;
 
 parameter idle = 3'd0;
@@ -43,7 +43,7 @@ always @(*) begin // next state
         compute: ns = store;
 
         store: begin
-            if(lbp_addr < 6'd54) ns = read;
+            if(lbp_addr < 14'd16254) ns = read;
             else ns = done;
         end
 

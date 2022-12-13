@@ -1,16 +1,18 @@
 `timescale 1ns/10ps
-`define CYCLE      10        	  // Modify your clock period here
-`define End_CYCLE  100000              // Modify cycle times once your design need more cycle times!
+`define CYCLE      12.5          	  // Modify your clock period here
+`define SDFFILE    "./SYN/LBP_syn.sdf"	  // Modify your sdf file name
+`define End_CYCLE  100000000              // Modify cycle times once your design need more cycle times!
 
-  
-`define EXP        "D:/vloglab_22a/vloglab_22a/Lab7/golden1.dat"     
+`define PAT        "./pattern1.dat"    
+`define EXP        "./golden1.dat"     
 
 
 module testfixture;
 
-parameter N_EXP   = 63; // 8 x 8 pixel
+parameter N_EXP   = 16384; // 128 x 128 pixel
 parameter N_PAT   = N_EXP;
 
+reg   [7:0]   gray_mem   [0:N_PAT-1];
 reg   [7:0]   exp_mem    [0:N_EXP-1];
 
 reg [7:0] LBP_dbg;
@@ -24,59 +26,79 @@ integer err = 0;
 integer times = 0;
 reg over = 0;
 integer exp_num = 0;
-wire [5:0] gray_addr;
-wire [5:0] lbp_addr;
-wire [7:0] gray_data;
+wire [13:0] gray_addr;
+wire [13:0] lbp_addr;
+reg [7:0] gray_data;
 reg gray_ready = 0;
 integer i;
 
    LBP LBP( .clk(clk), .reset(reset), 
-            .gray_addr(gray_addr), .gray_req(gray_req), .gray_data(gray_data), 
-	    .lbp_addr(lbp_addr), .lbp_write(lbp_write), .lbp_data(lbp_data), 
-	    .finish(finish));
+            .gray_addr(gray_addr), .gray_req(gray_req), .gray_ready(gray_ready), .gray_data(gray_data), 
+			.lbp_addr(lbp_addr), .lbp_valid(lbp_valid), .lbp_data(lbp_data), .finish(finish));
 			
-   lbp_mem u_lbp_mem(.lbp_write(lbp_write), .lbp_data(lbp_data), .lbp_addr(lbp_addr));
-   gray_mem u_gray_mem(.gray_addr(gray_addr), .gray_req(gray_req), .gray_data(gray_data), .clk(clk));
+   lbp_mem u_lbp_mem(.lbp_valid(lbp_valid), .lbp_data(lbp_data), .lbp_addr(lbp_addr), .clk(clk));
+   
 
-initial	$readmemh ("D:/Master Chi/LBP/golden1.dat", exp_mem);
+`ifdef SDF
+	initial $sdf_annotate(`SDFFILE, LBP);
+`endif
+
+initial	$readmemh (`PAT, gray_mem);
+initial	$readmemh (`EXP, exp_mem);
 
 always begin #(`CYCLE/2) clk = ~clk; end
 
+initial begin
+	//$fsdbDumpfile("LBP.fsdb");
+	//$fsdbDumpvars;
+end
+
+initial begin  // data input
+   @(negedge clk)  reset = 1'b1; 
+   #(`CYCLE*2);    reset = 1'b0; 
+   @(negedge clk)  gray_ready = 1'b1;
+    while (finish == 0) begin             
+      if( gray_req ) begin
+         gray_data = gray_mem[gray_addr];  
+      end 
+      else begin
+         gray_data = 'hz;  
+      end                    
+      @(negedge clk); 
+    end     
+    gray_ready = 0; gray_data='hz;
+	@(posedge clk) result_compare = 1; 
+end
 
 initial begin // result compare
 	$display("-----------------------------------------------------\n");
  	$display("START!!! Simulation Start .....\n");
  	$display("-----------------------------------------------------\n");
-	reset = 1'b0; 
-   	@(negedge clk)  reset = 1'b1; 
-   	#(`CYCLE*2);    reset = 1'b0; 
 	#(`CYCLE*3); 
-	wait( finish === 1 ) ;
-	@(negedge clk); 
+	wait( finish ) ;
+	@(posedge clk); @(posedge clk);
 	for (i=0; i <N_PAT ; i=i+1) begin
 			//@(posedge clk);  // TRY IT ! no comment this line for debugging !!
 				exp_dbg = exp_mem[i]; LBP_dbg = u_lbp_mem.LBP_M[i];
-				if (exp_mem[i] === u_lbp_mem.LBP_M[i]) begin
-					$display("pixel %d is CORRECT !! expected result is %d", i, exp_dbg); 
+				if (exp_mem[i] == u_lbp_mem.LBP_M[i]) begin
+					err = err;
 				end
 				else begin
-					$display("");
-					$display("pixel %d is WRONG !! expected result is %d, but real result is %d", i, exp_dbg, LBP_dbg); 
-					$display("");
+					//$display("pixel %d is FAIL !!", i); 
 					err = err+1;
-				end				
+					if (err <= 10) $display("Output pixel %d are wrong!", i);
+					if (err == 11) begin $display("Find the wrong pixel reached a total of more than 10 !, Please check the code .....\n");  end
+				end
+				if( ((i%1000) === 0) || (i == 16383))begin  
+					if ( err === 0)
+      					$display("Output pixel: 0 ~ %d are correct!\n", i);
+					else
+					$display("Output Pixel: 0 ~ %d are wrong ! The wrong pixel reached a total of %d or more ! \n", i, err);
+					
+  				end					
+				exp_num = exp_num + 1;
 	end
-	$display("-----------------------------------------------------\n");
-         if (err == 0)  begin
-            $display("Congratulations! All data have been generated successfully!\n");
-            $display("-------------------------PASS------------------------\n");
-         end
-         else begin
-            $display("There are %d errors!\n", err);
-            $display("-----------------------------------------------------\n");
-	    
-         end
-      #(`CYCLE/2); $finish;
+	over = 1;
 end
 
 
@@ -88,44 +110,46 @@ initial  begin
  	$display("-----------------------------------------------------\n");
  	$finish;
 end
+
+initial begin
+      @(posedge over)      
+      if((over) && (exp_num!='d0)) begin
+         $display("-----------------------------------------------------\n");
+         if (err == 0)  begin
+            $display("Congratulations! All data have been generated successfully!\n");
+            $display("-------------------------PASS------------------------\n");
+         end
+         else begin
+            $display("There are %d errors!\n", err);
+            $display("-----------------------------------------------------\n");
+	    
+         end
+      end
+      #(`CYCLE/2); $finish;
+end
    
 endmodule
 
 
-module lbp_mem (lbp_write, lbp_data, lbp_addr);
-input		lbp_write;
-input	[5:0] 	lbp_addr;
+module lbp_mem (lbp_valid, lbp_data, lbp_addr, clk);
+input		lbp_valid;
+input	[13:0] 	lbp_addr;
 input	[7:0]	lbp_data;
+input		clk;
 
-reg [7:0] LBP_M [0:63];
+reg [7:0] LBP_M [0:16383];
 integer i;
 
 initial begin
-	for (i=0; i<=63; i=i+1) LBP_M[i] = 0;
+	for (i=0; i<=16383; i=i+1) LBP_M[i] = 0;
 end
 
-always@(posedge lbp_write) 
-	LBP_M[ lbp_addr ] <= lbp_data;
-
-endmodule
-
-
-
-module gray_mem (gray_addr, gray_req, gray_data, clk);
-input	[5:0]	gray_addr;
-input		gray_req;
-output	[7:0]	gray_data;
-input		clk;
-`define PAT        "D:/vloglab_22a/vloglab_22a/Lab7/pattern1.dat"  
-reg	[7:0]	gray_data;
-
-reg [7:0] GRAY_M [0:63];
-
-initial	$readmemh ("D:/Master Chi/LBP/pattern1.dat", GRAY_M);
-
 always@(negedge clk) 
-	if (gray_req) gray_data <= GRAY_M[ gray_addr ] ;
+	if (lbp_valid) LBP_M[ lbp_addr ] <= lbp_data;
 
 endmodule
+
+
+
 
 
