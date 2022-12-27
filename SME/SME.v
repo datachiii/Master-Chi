@@ -187,11 +187,11 @@ end
 //pattern register
 always@(posedge clk, posedge reset) begin
     if(reset) begin
-        for(i=0;i<8;i=i+1) reg_p[i] <= 0;
+        for(i=0;i<9;i=i+1) reg_p[i] <= 0;
     end
     else if(ispattern) reg_p[cnt_p] <= chardata;
     else if(ns == hit || ns == unhit) begin
-        for(i=0;i<8;i=i+1) reg_p[i] <= 0;
+        for(i=0;i<9;i=i+1) reg_p[i] <= 0;
     end
     else;
 end
@@ -222,27 +222,16 @@ always @(*) begin
     else;
 end
 
-reg [3:0] length_p,index;
+reg [3:0] length_p;
 //A counter for the length of word in pattern
 always @(posedge clk, posedge reset) begin
-    if(reset) begin
-        length_p <= 0;
-        index <= 0;
-    end
+    if(reset) length_p <= 0;
     else if(cs == read_pattern) begin
-        if(index < cnt_p) begin
-            if(reg_p[index] == caret) index <= index + 1;
-            else if(reg_p[index] == dollar) index <= index + 1;
-            else begin
-                length_p <= length_p + 1;
-                index <= index + 1;
-            end
-        end
+        if(reg_p[cnt_p-1] == caret);
+        else if(reg_p[cnt_p-1] == dollar);
+        else length_p <= length_p + 1;
     end
-    else if(cs == finish) begin
-        length_p <= 0;
-        index <= 0;
-    end
+    else if(cs == finish) length_p <= 0;
     else;
 end
 
