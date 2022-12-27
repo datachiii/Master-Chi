@@ -223,7 +223,7 @@ always @(*) begin
 end
 
 reg [3:0] length_p;
-//A counter for the length of word in pattern
+//a counter for the length of word in pattern
 always @(posedge clk, posedge reset) begin
     if(reset) length_p <= 0;
     else if(cs == read_pattern) begin
@@ -236,7 +236,7 @@ always @(posedge clk, posedge reset) begin
 end
 
 reg check_length;
-//A signal to confirm whether need to check the length of the word
+//a signal to confirm whether need to check the length of the word
 always @(*) begin
     if(cs == check)begin
         if(reg_p[0] == caret && reg_p[cnt_p-1] == dollar) check_length = 1;
