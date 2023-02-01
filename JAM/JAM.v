@@ -168,15 +168,28 @@ end
 
 always @(*) begin 
     if(cs == reverse) begin
-        for(i=0;i<a;i=i+1)begin
-            r_s[i] = s[i];
-        end 
-
+        case(a)
+        1: r_s[0] = s[0];
+        2: for(i=0;i<2;i=i+1) r_s[i] = s[i];
+        3: for(i=0;i<3;i=i+1) r_s[i] = s[i];
+        4: for(i=0;i<4;i=i+1) r_s[i] = s[i];
+        5: for(i=0;i<5;i=i+1) r_s[i] = s[i];
+        6: for(i=0;i<6;i=i+1) r_s[i] = s[i];
+        default;
+        endcase
+        
         r_s[a] = s[a];
 
-        for(k=b;k<8;k=k+1) begin
-            r_s[k] = s[7+b-k];
-        end        
+        case(b)
+        1: for(k=1;k<8;k=k+1) r_s[k] = s[7+1-k];
+        2: for(k=2;k<8;k=k+1) r_s[k] = s[7+2-k];
+        3: for(k=3;k<8;k=k+1) r_s[k] = s[7+3-k];
+        4: for(k=4;k<8;k=k+1) r_s[k] = s[7+4-k];
+        5: for(k=5;k<8;k=k+1) r_s[k] = s[7+5-k];
+        6: for(k=6;k<8;k=k+1) r_s[k] = s[7+6-k];
+        7: r_s[7] = s[7];
+        default;
+        endcase        
     end
     else;
 end
