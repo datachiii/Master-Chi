@@ -127,11 +127,41 @@ end
 always @(*) begin // the position which exchange with the exchange point
     if(cs == compare1) exchange_point2 = b;
     else if(cs == compare2)begin
-        for(i=b;i<8;i=i+1)begin
-            if((s[i] < s[exchange_point2] ) && (s[i] > s[a]))
-                exchange_point2 = i;
+        case(b)
+        1:  for(i=1;i<8;i=i+1)begin
+                if((s[i] < s[exchange_point2] ) && (s[i] > s[a])) exchange_point2 = i;
+                else;
+            end
+
+        2:  for(i=2;i<8;i=i+1)begin
+                if((s[i] < s[exchange_point2] ) && (s[i] > s[a])) exchange_point2 = i;
+                else;
+            end
+
+        3:  for(i=3;i<8;i=i+1)begin
+                if((s[i] < s[exchange_point2] ) && (s[i] > s[a])) exchange_point2 = i;
+                else;
+            end
+
+        4:  for(i=4;i<8;i=i+1)begin
+                if((s[i] < s[exchange_point2] ) && (s[i] > s[a])) exchange_point2 = i;
+                else;
+            end
+
+        5:  for(i=5;i<8;i=i+1)begin
+                if((s[i] < s[exchange_point2] ) && (s[i] > s[a])) exchange_point2 = i;
+                else;
+            end
+
+        6:  for(i=6;i<8;i=i+1)begin
+                if((s[i] < s[exchange_point2] ) && (s[i] > s[a])) exchange_point2 = i;
+                else;
+            end
+
+        7:  if((s[7] < s[exchange_point2] ) && (s[7] > s[a])) exchange_point2 = 7;
             else;
-        end
+        default;
+        endcase
     end
     else if(cs == reverse) exchange_point2 = 0;
     else;
