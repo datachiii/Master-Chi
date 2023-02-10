@@ -58,7 +58,7 @@ always @(*) begin // next state
 
     done: ns = idle;
 
-    default ns = idle;
+    default: ns = idle;
 
     endcase
 end
@@ -160,7 +160,7 @@ always @(*) begin // the position which exchange with the exchange point
 
         7:  if((s[7] < s[exchange_point2] ) && (s[7] > s[a])) exchange_point2 = 7;
             else;
-        default;
+        default: ;
         endcase
     end
     else if(cs == reverse) exchange_point2 = 0;
@@ -205,7 +205,7 @@ always @(*) begin
         4: for(i=0;i<4;i=i+1) r_s[i] = s[i];
         5: for(i=0;i<5;i=i+1) r_s[i] = s[i];
         6: for(i=0;i<6;i=i+1) r_s[i] = s[i];
-        default;
+        default: ;
         endcase
         
         r_s[a] = s[a];
@@ -218,7 +218,7 @@ always @(*) begin
         5: for(k=5;k<8;k=k+1) r_s[k] = s[7+5-k];
         6: for(k=6;k<8;k=k+1) r_s[k] = s[7+6-k];
         7: r_s[7] = s[7];
-        default;
+        default: ;
         endcase        
     end
     else;
