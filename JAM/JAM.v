@@ -193,7 +193,7 @@ always @(posedge CLK) begin
     else if(cs == backup) begin
         for(i=0;i<8;i=i+1) s[i] <= r_s[i];
     end
-    else ;
+    else;
 end
 
 always @(*) begin 
