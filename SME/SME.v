@@ -13,6 +13,8 @@ reg [4:0] i_p, cnt_p;
 reg [3:0] cs,ns;
 reg [7:0] reg_s [0:31];
 reg [7:0] reg_p [0:8];
+reg [3:0] length_p, length_s, max_length;
+reg check_length;
 
 //debug 
 wire [7:0] s_debug = reg_s[i_s];
@@ -57,7 +59,7 @@ always@(*) begin
     end
     check: begin
             if(i_p == cnt_p) ns = hit; // all match
-            else if(i_s == cnt_s || i_p == cnt_p) ns = check_match;
+            else if(i_s == cnt_s) ns = check_match;
             else ns = check;
     end 
     check_match: begin
@@ -169,7 +171,8 @@ always@(posedge clk or posedge reset) begin
         reg_s[0] <= chardata;
         for(i=1;i<32;i=i+1) reg_s[i] <= 0;
     end
-    else if(isstring == 1) reg_s[cnt_s] <= chardata;    
+    else if(isstring == 1) reg_s[cnt_s] <= chardata;
+    else;    
 end
 //string counter
 always@(*) begin
@@ -203,8 +206,6 @@ always@(posedge clk, posedge reset) begin
     else;
 end
 
-reg [3:0] length_s;
-reg [3:0] max_length;
 //a counter for the length of word in string
 always @(posedge clk, posedge reset) begin
     if(reset) length_s <= 0;
@@ -214,7 +215,9 @@ always @(posedge clk, posedge reset) begin
         else if(reg_s[cnt_s_temp] == 0);
         else length_s <= length_s + 1;
     end
+    else;
 end
+
 //recording the maximum of word length
 always @(*) begin
     if(cs == finish && ns == read_string) max_length = 0;
@@ -222,7 +225,6 @@ always @(*) begin
     else;
 end
 
-reg [3:0] length_p;
 //a counter for the length of word in pattern
 always @(posedge clk, posedge reset) begin
     if(reset) length_p <= 0;
@@ -235,7 +237,6 @@ always @(posedge clk, posedge reset) begin
     else;
 end
 
-reg check_length;
 //a signal to confirm whether need to check the length of the word
 always @(*) begin
     if(cs == check)begin
